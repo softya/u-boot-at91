@@ -314,7 +314,6 @@ static void cb_boot(struct usb_ep *ep, struct usb_request *req)
 	return;
 }
 
-
 static void cb_oem(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
@@ -328,14 +327,10 @@ static void cb_oem(struct usb_ep *ep, struct usb_request *req)
 	}
 }
 
-static void cb_flash(struct usb_ep *ep, struct usb_request *req)
+static int handle_flash_emmc(char *part_name, char *response)
 {
-	char *cmdbuf = req->buf;
         int status = 0;
-	char response[32];
-	char part_name[20]={0,};
 
-	strncpy (part_name, cmdbuf + 6, req->actual - 6);
         if (download_bytes) {
                 struct fastboot_ptentry *ptn;
 
@@ -405,9 +400,17 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
                 sprintf(response, "FAILno image downloaded");
         }
 
-	fastboot_tx_write_str(response);
 }
 
+static void cb_flash(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmdbuf = req->buf;
+	char response[32];
+	char part_name[20]={0,};
+	strncpy (part_name, cmdbuf + 6, req->actual - 6);
+	handle_flash_emmc (part_name, response);
+	fastboot_tx_write_str(response);
+}
 struct cmd_dispatch_info {
 	char *cmd;
 	void (*cb)(struct usb_ep *ep, struct usb_request *req);
