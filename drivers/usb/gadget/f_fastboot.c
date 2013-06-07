@@ -305,10 +305,8 @@ static int fastboot_setup_get_conf(struct usb_gadget *gadget,
 
 static void fastboot_complete_in(struct usb_ep *ep, struct usb_request *req)
 {
-	int status = req->status;
-
 	FBTINFO("status: %d ep_in trans: %d\n",
-				status,
+				req->status,
 				req->actual);
 }
 
@@ -484,15 +482,18 @@ struct usb_gadget_driver fast_gadget = {
 	.disconnect	= fastboot_disconnect,
 };
 
+void set_fb_config (struct fastboot_config *cfg);
 int fastboot_init(void)
 {
 	int ret;
 
-	ret = fastboot_board_init(&fb_cfg, &vendor_fb_strings);
+	ret = fastboot_board_init(&fastboot_cfg, &vendor_fb_strings);
 	if (ret)
 		return ret;
 	if (!vendor_fb_strings)
 		return -EINVAL;
+
+	set_fb_config(&fastboot_cfg);
 
 	ret = usb_gadget_register_driver(&fast_gadget);
 	if (ret) {
