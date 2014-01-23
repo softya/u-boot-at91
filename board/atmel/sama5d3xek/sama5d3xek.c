@@ -37,6 +37,10 @@
 #include <net.h>
 #include <netdev.h>
 
+#ifdef CONFIG_FASTBOOT
+#include <usb/fastboot.h>
+#endif
+
 #ifdef CONFIG_USB_GADGET_ATMEL_USBA
 #include <asm/arch/atmel_usba_udc.h>
 #endif
@@ -231,6 +235,23 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_FASTBOOT
+extern int fastboot_mode_flag;
+
+void fastboot_button_hw_init(void)
+{
+	at91_set_pio_input(AT91_PIO_PORTE, 27, 1);
+}
+
+void check_fastboot_button(void)
+{
+	if (at91_get_pio_value(AT91_PIO_PORTE, 27) == 0) {
+		printf("BP3/USER1 button pressed...\n");
+		fastboot_mode_flag = 1;
+	}
+}
+#endif
+
 int board_init(void)
 {
 	/* adress of boot parameters */
@@ -257,10 +278,16 @@ int board_init(void)
 	if (has_gmac())
 		at91_gmac_hw_init();
 #endif
+#ifdef CONFIG_FASTBOOT
+	fastboot_button_hw_init();
+	check_fastboot_button();
+#endif
+
 #ifdef CONFIG_LCD
 	if (has_lcdc())
 		sama5d3xek_lcd_hw_init();
 #endif
+
 	return 0;
 }
 
@@ -393,6 +420,10 @@ int board_late_init(void)
 		setenv(SAMA5D3_DM_TYPE_ENV_NAME, "");
 		break;
 	}
+#endif
+
+#ifdef CONFIG_FASTBOOT
+	check_fastboot_mode();
 #endif
 
 	return 0;
