@@ -66,6 +66,7 @@
 #include <nand.h>
 #include <environment.h>
 
+#ifdef CONFIG_OMAP
 #define MAX_PTN                 5
 
 /* Initialize the name of fastboot flash name mappings */
@@ -111,6 +112,7 @@ fastboot_ptentry nand_ptn[MAX_PTN] = {
 			  FASTBOOT_PTENTRY_FLAGS_WRITE_HW_BCH8_ECC,
 	},
 };
+#endif
 
 struct fastboot_config fastboot_cfg;
 
@@ -146,7 +148,9 @@ static void set_ecc(int hw)
 		sprintf(ecc_type, "0");
 	}
 
+#ifdef CONFIG_OMAP
 	do_switch_ecc(NULL, 0, 3, ecc);
+#endif
 }
 
 static void save_env(struct fastboot_ptentry *ptn,
@@ -244,7 +248,9 @@ static void save_block_values(struct fastboot_ptentry *ptn,
 
 	}
 
+#ifdef CONFIG_OMAP
 	do_env_save (NULL, 0, 1, saveenv);
+#endif
 }
 
 /* When save = 0, just parse.  The input is unchanged
@@ -477,6 +483,8 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 		sprintf(write_type, "write.i");
 	else if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_JFFS2)
 		sprintf(write_type, "write.jffs2");
+	else if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS)
+		sprintf(write_type, "write.trimffs");
 	else
 		sprintf(write_type, "write");
 
@@ -496,8 +504,9 @@ static int write_to_ptn(struct fastboot_ptentry *ptn)
 	sprintf(length, "0x%x", ptn->length);
 
 	for (repeat = 0; repeat < repeat_max; repeat++) {
-
+#ifdef CONFIG_OMAP
 		set_ptn_ecc(ptn);
+#endif
 		sprintf(start, "0x%x", ptn->start + (repeat * ptn->length));
 
 		do_nand(NULL, 0, 4, erase);
@@ -681,6 +690,8 @@ int handle_flash(char *part_name , char *response)
 		ptn = fastboot_flash_find_ptn(part_name);
 		if (ptn == 0) {
 			sprintf(response, "FAILpartition does not exist");
+		} else if (ptn->flags & FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED) {
+			sprintf(response, "FAILpartition flash diabled");
 		} else if ((fastboot_cfg.download_bytes > ptn->length) &&
 				!(ptn->flags & FASTBOOT_PTENTRY_FLAGS_WRITE_ENV)) {
 			sprintf(response, "FAILimage too large for partition");

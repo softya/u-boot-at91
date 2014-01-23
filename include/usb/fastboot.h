@@ -198,6 +198,11 @@ struct fastboot_ptentry{
    using the setenv and saveenv commands */
 #define FASTBOOT_PTENTRY_FLAGS_WRITE_ENV              0x00002000
 
+/* Disable nand flash partition to be written */
+#define FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED         0x00004000
+
+/* Write the file with write.trimffs */
+#define FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS          0x00008000
 
 /* The Android-style flash handling */
 
