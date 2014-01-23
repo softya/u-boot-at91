@@ -42,6 +42,8 @@ static struct usb_gadget_strings def_fb_strings = {
 	.strings	= def_usb_fb_strings,
 };
 
+int fastboot_mode_flag = 0;
+
 /*
  * Hardcoded memory region to stash data which comes over USB before it is
  * stored on media
@@ -81,6 +83,13 @@ int fastboot_board_init(struct fastboot_config *interface,
 
 	*str = &def_fb_strings;
 	return 0;
+}
+
+void check_fastboot_mode(void)
+{
+    if (fastboot_mode_flag) {
+        setenv("bootcmd", "fastboot");
+    }
 }
 
 static int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])

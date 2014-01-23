@@ -130,6 +130,7 @@ int fastboot_poll(void);
 
 int fastboot_board_init(struct fastboot_config *interface,
 		struct usb_gadget_strings **str);
+void check_fastboot_mode(void);
 
 
 /* Android-style flash naming */
