@@ -187,7 +187,9 @@ static int fastboot_bind(struct usb_gadget *gadget)
 
 	hs_ep_out.bEndpointAddress = fs_ep_out.bEndpointAddress;
 
-	return usb_gadget_connect(gadget);
+	usb_gadget_connect(gadget);
+
+	return 0;
 err:
 	return -1;
 }
@@ -514,7 +516,6 @@ static int fastboot_setup(struct usb_gadget *gadget,
 static void fastboot_disconnect(struct usb_gadget *gadget)
 {
 	fastboot_disable_ep(gadget);
-	gadget_is_connected = 0;
 }
 
 struct usb_gadget_driver fast_gadget = {

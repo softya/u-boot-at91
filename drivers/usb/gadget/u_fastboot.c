@@ -232,6 +232,7 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 			buffer, transfer_size);
 
 	fb_cfg->download_bytes += transfer_size;
+	udelay(125);
 
 	/* Check if transfer is done */
 	if (fb_cfg->download_bytes >= fb_cfg->download_size) {
