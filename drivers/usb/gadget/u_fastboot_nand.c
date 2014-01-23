@@ -112,6 +112,54 @@ fastboot_ptentry nand_ptn[MAX_PTN] = {
 			  FASTBOOT_PTENTRY_FLAGS_WRITE_HW_BCH8_ECC,
 	},
 };
+#elif defined(CONFIG_AT91FAMILY)
+#define MAX_PTN		7
+
+/* Initialize the name of fastboot flash name mappings */
+fastboot_ptentry nand_ptn[MAX_PTN] = {
+	{
+		.name   = "bootstrap",
+		.start  = 0x0000000,
+		.length = 0x0040000,
+		.flags  = FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED,
+	},
+	{
+		.name   = "uboot",
+		.start  = 0x0040000,
+		.length = 0x0080000,
+		.flags  = FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED,
+	},
+	{
+		.name   = "environment",
+		.start  = 0x00C0000,
+		.length = 0x00C0000,
+		.flags  = FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED,
+	},
+	{
+		.name   = "dtb",
+		.start  = 0x00180000,
+		.length = 0x00080000,
+		.flags  = 0,
+	},
+	{
+		.name   = "uImage",
+		.start  = 0x00200000,
+		.length = 0x00600000,
+		.flags  = 0,
+	},
+	{
+		.name   = "system",
+		.start  = 0x00800000,
+		.length = 0x07D00000, /* 125 M */
+		.flags  = FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS,
+	},
+	{
+		.name   = "userdata",
+		.start  = 0x08500000,
+		.length = 0x07B00000, /* 123 M */
+		.flags  = FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS,
+	},
+};
 #endif
 
 struct fastboot_config fastboot_cfg;
