@@ -231,7 +231,7 @@
 #endif
 
 /* Android fastboot support over USB */
-#ifdef CONFIG_SYS_USE_NANDFLASH
+#if defined(CONFIG_SYS_USE_NANDFLASH) || defined(CONFIG_SYS_USE_MMC)
 #define CONFIG_FASTBOOT
 #endif
 
@@ -244,12 +244,16 @@
 #define FASTBOOT_DEVICE_PRODUCT_ID		0x6158
 #define FASTBOOT_DEVICE_BCD			0x0100
 
-#define CONFIG_FASTBOOT_MAX_TRANSFER_SIZE	(SZ_256M - SZ_16M)
+#define CONFIG_FASTBOOT_MAX_TRANSFER_SIZE	(SZ_512M - SZ_16M)
 
 #ifdef CONFIG_SYS_USE_NANDFLASH
 #define FASTBOOT_NAND_BLOCK_SIZE		2048
 #define FASTBOOT_NAND_OOB_SIZE			64
 #define CONFIG_FASTBOOT_NAND
+#endif
+
+#ifdef CONFIG_SYS_USE_MMC
+#define CONFIG_MMC_FASTBOOT_DEV			  0
 #endif
 
 #endif /* CONFIG_FASTBOOT */
@@ -356,9 +360,9 @@
 #endif
 
 #ifdef CONFIG_SYS_USE_MMC
-#define CONFIG_BOOTARGS							\
-	"console=ttyS0,115200 earlyprintk "				\
-	"root=/dev/mmcblk0p2 rw rootwait"
+#define CONFIG_BOOTARGS	 \
+ "console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait "	 \
+ "init=/init androidboot.hardware=sama5d3x-ek androidboot.console=ttyS0"
 #else
 #define CONFIG_BOOTARGS							\
 	"console=ttyS0,115200 earlyprintk "				\

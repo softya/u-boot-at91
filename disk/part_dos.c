@@ -66,6 +66,24 @@ static void print_one_part(dos_partition_t *p, int ext_part_sector,
 	int lba_start = ext_part_sector + le32_to_int (p->start4);
 	int lba_size  = le32_to_int (p->size4);
 
+#ifdef CONFIG_FASTBOOT
+	extern int do_env_set(cmd_tbl_t *cmdtp, int flag, int argc,
+			      char * const argv[]);
+	char var[64], val[32];
+	char *setenv[4]  = { "setenv", NULL, NULL, NULL, };
+
+	setenv[1] = var;
+	setenv[2] = val;
+
+	sprintf (var, "part%d_start_block", part_num);
+	sprintf (val, "0x%x", lba_start);
+	do_env_set (NULL, 0, 3, setenv);
+
+	sprintf (var, "part%d_num_blocks", part_num);
+	sprintf (val, "0x%x", lba_size);
+	do_env_set (NULL, 0, 3, setenv);
+#endif
+
 	printf("%3d\t%-10d\t%-10d\t%08x-%02x\t%02x%s%s\n",
 		part_num, lba_start, lba_size, disksig, part_num, p->sys_ind,
 		(is_extended(p->sys_ind) ? " Extd" : ""),

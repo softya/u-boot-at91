@@ -65,6 +65,8 @@
 #include <environment.h>
 #include <mmc.h>
 
+#ifdef CONFIG_OMAP
+
 #define EFI_VERSION 0x00010000
 #define EFI_ENTRIES 128
 #define EFI_NAMELEN 36
@@ -508,3 +510,120 @@ int board_mmc_fbtptn_init(void)
         return load_ptbl();
 }
 
+#elif defined(CONFIG_AT91FAMILY)
+int do_format(void)
+{
+    return 0;
+}
+
+struct fastboot_config fastboot_cfg;
+
+extern int do_fat_fswrite(cmd_tbl_t *cmdtp, int flag,
+        int argc, char * const argv[]);
+extern int do_mmcops(cmd_tbl_t *cmdtp, int flag,
+        int argc, char * const argv[]);
+
+
+int handle_flash(char *part_name, char *response)
+{
+    int status = 0;
+
+    if (fastboot_cfg.download_bytes) {
+        if (!strcmp(part_name, "dtb") || !strcmp(part_name, "uImage")) {
+            char addr[32], filename[32], length[32];
+            addr[0] = '\0';
+            filename[0] = '\0';
+            length[0] = '\0';
+
+            char *fat_write[6] = {"fatwrite", "mmc", "0:1", NULL, NULL, NULL};
+
+            fat_write[3] = addr;
+            fat_write[4] = filename;
+            fat_write[5] = length;
+
+            sprintf(addr, "0x%x", (unsigned int)fastboot_cfg.transfer_buffer);
+            sprintf(length, "0x%x", (unsigned int)fastboot_cfg.download_bytes);
+            if (strcmp(part_name, "dtb") == 0) {
+                sprintf(filename, "%s", "dtb");
+            } else if (strcmp(part_name, "uImage") == 0) {
+                sprintf(filename, "%s", "uImage");
+            }
+
+            printf("Writing '%s'\n", part_name);
+            if (do_fat_fswrite(NULL, 0, 6, fat_write)) {
+                printf("Writing '%s' FAILED!\n", part_name);
+                sprintf(response, "FAIL: Write partition");
+            } else {
+                printf("Writing '%s' DONE!\n", part_name);
+                sprintf(response, "OKAY");
+            }
+        } else if (!strcmp(part_name, "rootfs")) {
+            char source[32], dest[32], length[32];
+            char *s;
+            source[0] = '\0';
+            dest[0] = '\0';
+            length[0] = '\0';
+
+            char *mmc_write[5] = {"mmc", "write", NULL, NULL, NULL};
+            char *mmc_init[2] = {"mmc", "rescan",};
+            char dev[2];
+            char *mmc_dev[3] = {"mmc", "dev", NULL};
+            char *mmc_part[2] = {"mmc", "part",};
+
+            mmc_dev[2] = dev;
+            sprintf(dev,"0x%x", CONFIG_MMC_FASTBOOT_DEV);
+
+            if (do_mmcops(NULL, 0, 3, mmc_dev)) {
+                printf("MMC DEV: %d selection FAILED!\n", CONFIG_MMC_FASTBOOT_DEV);
+                return -1;
+            }
+
+            printf("Initializing '%s'\n", part_name);
+            if (do_mmcops(NULL, 0, 2, mmc_init))
+                sprintf(response, "FAIL:Init of MMC card");
+            else
+                sprintf(response, "OKAY");
+
+            printf("Reading partition table\n");
+            if (do_mmcops(NULL, 0, 2, mmc_part))
+                sprintf(response, "FAIL:Read partition table");
+            else
+                sprintf(response, "OKAY");
+
+            mmc_write[2] = source;
+            mmc_write[3] = dest;
+            mmc_write[4] = length;
+
+            sprintf(source, "0x%x", (unsigned int)fastboot_cfg.transfer_buffer);
+            sprintf(length, "0x%x", (fastboot_cfg.download_bytes/512)+1);
+            s = getenv("part2_start_block");
+            if (s)
+                sprintf(dest, "%s", s);
+
+            printf("Writing '%s'\n", part_name);
+            if (do_mmcops(NULL, 0, 5, mmc_write)) {
+                printf("Writing '%s' FAILED!\n", part_name);
+                sprintf(response, "FAIL: Write partition");
+            } else {
+                printf("Writing '%s' DONE!\n", part_name);
+                sprintf(response, "OKAY");
+            }
+
+        } else {
+            sprintf(response, "FAILpartition does not support");
+        }
+    } else {
+        sprintf(response, "FAILno image downloaded");
+    }
+
+    sprintf(response, "OKAY");
+
+    return status;
+}
+
+int board_mmc_fbtptn_init(void)
+{
+    return 0;
+}
+
+#endif
