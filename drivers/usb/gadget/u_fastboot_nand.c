@@ -126,13 +126,13 @@ fastboot_ptentry nand_ptn[MAX_PTN] = {
 	{
 		.name   = "uboot",
 		.start  = 0x0040000,
-		.length = 0x0080000,
+		.length = 0x00A0000,
 		.flags  = FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED,
 	},
 	{
 		.name   = "environment",
-		.start  = 0x00C0000,
-		.length = 0x00C0000,
+		.start  = 0x00E0000,
+		.length = 0x0020000,
 		.flags  = FASTBOOT_PTENTRY_FLAGS_FLASH_DISABLED,
 	},
 	{
@@ -149,14 +149,14 @@ fastboot_ptentry nand_ptn[MAX_PTN] = {
 	},
 	{
 		.name   = "system",
-		.start  = 0x00800000,
-		.length = 0x07D00000, /* 125 M */
+		.start  = 0x01000000,
+		.length = 0x08000000, /* 128 M */
 		.flags  = FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS,
 	},
 	{
 		.name   = "userdata",
-		.start  = 0x08500000,
-		.length = 0x07B00000, /* 123 M */
+		.start  = 0x09000000,
+		.length = 0x06000000, /* 96 M */
 		.flags  = FASTBOOT_PTENTRY_FLAGS_WRITE_TRIMFFS,
 	},
 };

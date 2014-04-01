@@ -28,6 +28,7 @@
 #include <asm/arch/at91_common.h>
 #include <asm/arch/at91_pmc.h>
 #include <asm/arch/at91_rstc.h>
+#include <asm/arch/at91_shdwn.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/clk.h>
 #include <lcd.h>
@@ -252,6 +253,30 @@ void check_fastboot_button(void)
 }
 #endif
 
+#ifdef CONFIG_ANDROID_RECOVERY
+extern int recovery_mode_flag;
+
+void recovery_button_hw_init(void)
+{
+	struct at91_shdwn *shdwn = (struct at91_shdwn *)ATMEL_BASE_SHDWN;
+
+	writel(AT91_SHDW_MR_WKMODE0H2L, &shdwn->mr);
+	writel(AT91_SHDW_CR_KEY | AT91_SHDW_CR_SHDW, &shdwn->cr);
+}
+
+void check_recovery_button(void)
+{
+	u32 sr = 0;
+	struct at91_shdwn *shdwn = (struct at91_shdwn *)ATMEL_BASE_SHDWN;
+
+	sr = readl(&shdwn->sr);
+	if (sr & AT91_SHDW_SR_WAKEUP0) {
+		printf("PB2/WAKE_UP button pressed...\n");
+		recovery_mode_flag = 1;
+	}
+}
+#endif
+
 int board_init(void)
 {
 	/* adress of boot parameters */
@@ -282,7 +307,10 @@ int board_init(void)
 	fastboot_button_hw_init();
 	check_fastboot_button();
 #endif
-
+#ifdef CONFIG_ANDROID_RECOVERY
+	recovery_button_hw_init();
+	check_recovery_button();
+#endif
 #ifdef CONFIG_LCD
 	if (has_lcdc())
 		sama5d3xek_lcd_hw_init();
@@ -424,6 +452,11 @@ int board_late_init(void)
 
 #ifdef CONFIG_FASTBOOT
 	check_fastboot_mode();
+#endif
+
+#ifdef CONFIG_ANDROID_RECOVERY
+	extern void check_recovery_mode(void);
+	check_recovery_mode();
 #endif
 
 	return 0;
