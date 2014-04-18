@@ -11,6 +11,8 @@ int do_recovery(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 #ifdef CONFIG_SYS_USE_NANDFLASH
 	setenv("bootcmd", CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND);
+#elif CONFIG_SYS_USE_MMC
+	setenv("bootcmd", CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC);
 #endif
 
 	return ret;
