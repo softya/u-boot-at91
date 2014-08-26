@@ -422,6 +422,8 @@ int board_late_init(void)
 	const char *SAMA5D3_BOARD_EK_NAME = "ek_name";
 	const char *SAMA5D3_MB_REV_ENV_NAME = "mb_rev";
 	const char *SAMA5D3_DM_TYPE_ENV_NAME = "dm_type";
+	const char *SAMA5D3_DTB_ENV_NAME = "dtb_name";
+	const char *SAMA5D3_HARDWARE_ENV_NAME = "hardware";
 	char rev_code[2], dm_id;
 	char name[32], *p;
 
@@ -434,20 +436,30 @@ int board_late_init(void)
 	rev_code[1] = '\0';
 	setenv(SAMA5D3_MB_REV_ENV_NAME, rev_code);
 
+	if (rev_code[0] == 'c')
+		strcat(name, "_revc");
+
 	dm_id = get_dm_board_id();
 	switch (dm_id) {
 	case BOARD_ID_PDA_DM:
 		setenv(SAMA5D3_DM_TYPE_ENV_NAME, "pda4");
+		setenv(SAMA5D3_HARDWARE_ENV_NAME, "sama5d3x-pda4");
+		strcat(name, "_pda4");
 		break;
 	case BOARD_ID_PDA7_DM:
 		setenv(SAMA5D3_DM_TYPE_ENV_NAME, "pda7");
+		setenv(SAMA5D3_HARDWARE_ENV_NAME, "sama5d3x-pda7");
+		strcat(name, "_pda7");
 		break;
-	case BOARD_ID_SAM9x5_DM:
 	case BOARD_ID_SAMA5D3X_DM:
+		setenv(SAMA5D3_HARDWARE_ENV_NAME, "sama5d3x-ek");
+		break;
 	default:
-		setenv(SAMA5D3_DM_TYPE_ENV_NAME, "");
 		break;
 	}
+
+	strcat(name, ".dtb");
+	setenv(SAMA5D3_DTB_ENV_NAME, name);
 #endif
 
 #ifdef CONFIG_FASTBOOT
