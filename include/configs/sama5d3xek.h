@@ -266,14 +266,16 @@
 
 #ifdef CONFIG_SYS_USE_NANDFLASH
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND \
-    "nand read 0x21000000 0x00180000 0x00080000; " \
-    "nand read 0x22000000 0x00800000 0x00800000; " \
-    "bootm 0x22000000 - 0x21000000"
+	"setenv bootargs $bootargs_for_android_nand;" \
+	"nand read 0x21000000 0x00180000 0x00080000; " \
+	"nand read 0x22000000 0x00800000 0x00800000; " \
+	"bootm 0x22000000 - 0x21000000"
 #elif CONFIG_SYS_USE_MMC
 #define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC \
-    "fatload mmc 0:1 0x21000000 dtb; " \
-    "fatload mmc 0:1 0x22000000 recovery.img; " \
-    "bootm 0x22000000 - 0x21000000"
+	"setenv bootargs $bootargs_for_android_mmc;" \
+	"fatload mmc 0:1 0x21000000 $dtb_name; " \
+	"fatload mmc 0:1 0x22000000 recovery.img; " \
+	"bootm 0x22000000 - 0x21000000"
 #endif
 
 #endif /* CONFIG_ANDROID_RECOVERY */
