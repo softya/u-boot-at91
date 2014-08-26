@@ -201,7 +201,7 @@
 #define CONFIG_USB_GADGET_ATMEL_USBA
 
 /* DFU class support */
-#define CONFIG_CMD_DFU
+//#define CONFIG_CMD_DFU
 
 #ifdef CONFIG_CMD_DFU
 #define CONFIG_DFU_FUNCTION
