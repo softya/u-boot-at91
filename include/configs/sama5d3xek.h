@@ -341,7 +341,17 @@
 		"mw.l $tmp $filesize;\0"			\
 	"write_nand_boot="\
 		"nand erase 0 0x10000; "			\
-		"nand write $copyaddr 0 $copysize;\0"
+		"nand write $copyaddr 0 $copysize;\0"		\
+	"bootargs_for_android_nand="\
+		"console=ttyS0,115200 "				\
+		"mtdparts=atmel_nand:16M(boot),128M(system),96M(userdata),-(cache) " \
+		"ubi.mtd=1 ubi.mtd=2 ubi.mtd=3 root=ubi0:system rootfstype=ubifs " \
+		"init=/init androidboot.console=ttyS0\0"	\
+	"bootargs_for_android_mmc="\
+		"console=ttyS0,115200 "				\
+		"mtdparts=atmel_nand:16M(boot),128M(system),96M(userdata),-(cache) " \
+		"root=/dev/mmcblk0p2 rw rootwait " \
+		"init=/init androidboot.console=ttyS0\0"
 
 #ifdef CONFIG_SYS_USE_SERIALFLASH
 /* bootstrap + u-boot + env + linux in serial flash */
@@ -359,9 +369,11 @@
 #define CONFIG_ENV_OFFSET		0xc0000
 #define CONFIG_ENV_OFFSET_REDUND	0x100000
 #define CONFIG_ENV_SIZE			0x20000
-#define CONFIG_BOOTCOMMAND	"run findfdt; " \
+#define CONFIG_BOOTCOMMAND	"setenv bootargs $bootargs_for_android_nand " \
+				"androidboot.hardware=\$hardware; " \
+				"nand read 0x21000000 0x180000 0x80000; " \
 				"nand read 0x22000000 0x200000 0x600000; " \
-				"bootm 0x22000000#conf@$conf_name"
+				"bootm 0x22000000 - 0x21000000"
 #elif CONFIG_SYS_USE_MMC
 /* bootstrap + u-boot + env in sd card */
 #define CONFIG_ENV_IS_IN_FAT
@@ -371,9 +383,11 @@
 #define FAT_ENV_DEVICE		0
 #define FAT_ENV_PART		1
 #define CONFIG_ENV_SIZE		0x4000
-#define CONFIG_BOOTCOMMAND	"run findfdt; " \
-				"fatload mmc 0:1 0x22000000 sama5d3xek.itb; " \
-				"bootm 0x22000000#conf@$conf_name"
+#define CONFIG_BOOTCOMMAND	"setenv bootargs $bootargs_for_android_mmc " \
+				"androidboot.hardware=\$hardware; " \
+				"fatload mmc 0:1 0x21000000 $dtb_name; " \
+				"fatload mmc 0:1 0x22000000 uImage; " \
+				"bootm 0x22000000 - 0x21000000"
 #define CONFIG_SYS_MMC_ENV_DEV	0
 #else
 #define CONFIG_ENV_IS_NOWHERE
