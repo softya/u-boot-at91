@@ -12,11 +12,11 @@
 #include <asm/errno.h>
 #include <asm/gpio.h>
 #include <asm/hardware.h>
+#include <linux/compat.h>
 #include <linux/list.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/atmel_usba_udc.h>
-#include <malloc.h>
 #include <usb/lin_gadget_compat.h>
 
 #include "atmel_usba_udc.h"
@@ -314,7 +314,7 @@ usba_ep_alloc_request(struct usb_ep *_ep, gfp_t gfp_flags)
 
 	DBG(DBG_GADGET, "ep_alloc_request: %p, 0x%x\n", _ep, gfp_flags);
 
-	req = malloc(sizeof(struct usba_request));
+	req = kzalloc(sizeof(struct usba_request), GFP_KERNEL);
 	if (!req)
 		return NULL;
 
@@ -1260,7 +1260,7 @@ static struct usba_ep *usba_udc_pdata(struct usba_platform_data *pdata,
 	struct usba_ep *eps;
 	int i;
 
-	eps = malloc(sizeof(struct usba_ep) * pdata->num_ep);
+	eps = kzalloc(sizeof(struct usba_ep) * pdata->num_ep, GFP_KERNEL);
 	if (!eps) {
 		error("failed to alloc eps\n");
 		return NULL;
