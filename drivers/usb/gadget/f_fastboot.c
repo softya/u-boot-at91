@@ -50,6 +50,7 @@ static inline struct f_fastboot *func_to_fastboot(struct usb_function *f)
 
 static struct f_fastboot *fastboot_func;
 static unsigned int download_size;
+static char download_lenth[8];
 static unsigned int download_bytes;
 
 static struct usb_endpoint_descriptor fs_ep_in = {
@@ -429,7 +430,8 @@ static void cb_download(struct usb_ep *ep, struct usb_request *req)
 	char response[RESPONSE_LEN];
 
 	strsep(&cmd, ":");
-	download_size = simple_strtoul(cmd, NULL, 16);
+	strncpy(download_lenth, cmd, 8);
+	download_size = simple_strtoul(download_lenth, NULL, 16);
 	download_bytes = 0;
 
 	printf("Starting download of %d bytes\n", download_size);
@@ -469,6 +471,103 @@ static void cb_boot(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 }
 
+static void cb_erase(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	char response[RESPONSE_LEN];
+
+	strcpy(response, "OKAY");
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		fastboot_tx_write_str("FAILmissing var");
+		return;
+	}
+
+#ifdef CONFIG_CMD_MTDPARTS
+    char *command = malloc(60 * sizeof(char));
+    int ret;
+
+    if (!strcmp_l1("dtb", cmd)) {
+        sprintf(command, "nand erase.part dtb");
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("boot", cmd)) {
+        sprintf(command, "nand erase.part boot");
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("system", cmd)) {
+        sprintf(command, "nand erase.part system");
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("userdata", cmd)) {
+        sprintf(command, "nand erase.part userdata");
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("all", cmd)) {
+        sprintf(command, "nand erase.part 0x00180000");
+        ret = run_command(command, 0);
+    } else {
+        fastboot_tx_write_str("FAILpart not support");
+        return;
+    }
+
+    if (ret) {
+        fastboot_tx_write_str("FAILnand write error");
+        return;
+    }
+#else
+    fastboot_tx_write_str("FAILmtd part is not enabled");
+    return;
+#endif
+    fastboot_tx_write_str(response);
+}
+
+static void cb_flash(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	char response[RESPONSE_LEN];
+
+	strcpy(response, "OKAY");
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		fastboot_tx_write_str("FAILmissing var");
+		return;
+	}
+
+#ifdef CONFIG_CMD_MTDPARTS
+    char *command = malloc(60 * sizeof(char));
+    int ret;
+
+    if (!strcmp_l1("dtb", cmd)) {
+        sprintf(command, "nand write %08x dtb %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("boot", cmd)) {
+        sprintf(command, "nand write %08x boot %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("system", cmd)) {
+        sprintf(command, "nand write.trimffs %08x system %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("userdata", cmd)) {
+        sprintf(command, "nand write.trimffs %08x userdata %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else {
+        fastboot_tx_write_str("FAILpart not support");
+        return;
+    }
+
+    if (ret) {
+        fastboot_tx_write_str("FAILnand write error");
+        return;
+    }
+#else
+    fastboot_tx_write_str("FAILmtd part is not enabled");
+    return;
+#endif
+    fastboot_tx_write_str(response);
+}
+
 struct cmd_dispatch_info {
 	char *cmd;
 	void (*cb)(struct usb_ep *ep, struct usb_request *req);
@@ -487,6 +586,12 @@ static const struct cmd_dispatch_info cmd_dispatch_info[] = {
 	}, {
 		.cmd = "boot",
 		.cb = cb_boot,
+	},{
+		.cmd = "erase",
+		.cb = cb_erase,
+	},{
+		.cmd = "flash",
+		.cb = cb_flash,
 	},
 };
 
