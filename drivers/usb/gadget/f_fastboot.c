@@ -471,7 +471,8 @@ static void cb_boot(struct usb_ep *ep, struct usb_request *req)
 	fastboot_tx_write_str("OKAY");
 }
 
-static void cb_erase(struct usb_ep *ep, struct usb_request *req)
+#ifdef CONFIG_SYS_USE_NANDFLASH
+static void cb_erase_nand(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
 	char response[RESPONSE_LEN];
@@ -519,7 +520,7 @@ static void cb_erase(struct usb_ep *ep, struct usb_request *req)
     fastboot_tx_write_str(response);
 }
 
-static void cb_flash(struct usb_ep *ep, struct usb_request *req)
+static void cb_flash_nand(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmd = req->buf;
 	char response[RESPONSE_LEN];
@@ -566,6 +567,98 @@ static void cb_flash(struct usb_ep *ep, struct usb_request *req)
     return;
 #endif
     fastboot_tx_write_str(response);
+}
+
+#elif CONFIG_SYS_USE_MMC
+static void cb_flash_mmc(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	char response[RESPONSE_LEN];
+
+	strcpy(response, "OKAY");
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		fastboot_tx_write_str("FAILmissing var");
+		return;
+	}
+
+#ifdef CONFIG_FAT_WRITE
+    char *command = malloc(60 * sizeof(char));
+    int ret= 0;
+
+    if (!strcmp_l1("dtb", cmd)) {
+        sprintf(command, "fatwrite mmc 0 %08x sama5d4ek.dtb %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("uboot", cmd)) {
+        sprintf(command, "fatwrite mmc 0 %08x u-boot.bin %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("boot", cmd)) {
+        sprintf(command, "fatwrite mmc 0 %08x zImage %s",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("system", cmd)) {
+        sprintf(command, "mmc write %08x 20800 %08lx",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, simple_strtoul(download_lenth, NULL, 16)/512 + 1);
+        ret = run_command(command, 0);
+    } else if (!strcmp_l1("userdata", cmd)) {
+        sprintf(command, "mmc write %08x 17E800 %08lx",
+            CONFIG_USB_FASTBOOT_BUF_ADDR, simple_strtoul(download_lenth, NULL, 16)/512 + 1);
+        ret = run_command(command, 0);
+    } else {
+        fastboot_tx_write_str("FAILpart not support");
+        return;
+    }
+
+    if (ret) {
+        fastboot_tx_write_str("FAILmmc write error");
+        return;
+    }
+#else
+    fastboot_tx_write_str("FAILfat cmd is not enabled");
+    return;
+#endif
+    fastboot_tx_write_str(response);
+}
+
+static void cb_erase_mmc(struct usb_ep *ep, struct usb_request *req)
+{
+	char *cmd = req->buf;
+	char response[RESPONSE_LEN];
+
+	strcpy(response, "OKAY");
+
+	strsep(&cmd, ":");
+	if (!cmd) {
+		fastboot_tx_write_str("FAILmissing var");
+		return;
+	}
+    fastboot_tx_write_str(response);
+}
+#endif
+
+static void cb_flash(struct usb_ep *ep, struct usb_request *req) {
+#ifdef CONFIG_SYS_USE_NANDFLASH
+    cb_flash_nand(ep, req);
+#elif CONFIG_SYS_USE_MMC
+    cb_flash_mmc(ep, req);
+#else
+    fastboot_tx_write_str("FAILUnsupported media");
+	return;
+#endif
+}
+
+static void cb_erase(struct usb_ep *ep, struct usb_request *req) {
+#ifdef CONFIG_SYS_USE_NANDFLASH
+    cb_erase_nand(ep, req);
+#elif CONFIG_SYS_USE_MMC
+    cb_erase_mmc(ep, req);
+#else
+    fastboot_tx_write_str("FAILUnsupported media");
+	return;
+#endif
 }
 
 struct cmd_dispatch_info {
