@@ -14,6 +14,7 @@
 #define __CONFIG_H
 
 #include <asm/hardware.h>
+#include <linux/sizes.h>
 
 #define CONFIG_SYS_TEXT_BASE		0x26f00000
 
@@ -123,6 +124,11 @@
 #define CONFIG_CMD_NAND
 
 #ifdef CONFIG_CMD_NAND
+#define CONFIG_MTD_DEVICE
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_RBTREE
+#define CONFIG_CMD_NAND_TRIMFFS
 #define CONFIG_NAND_ATMEL
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		ATMEL_BASE_CS3
@@ -173,6 +179,15 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	3
 #define CONFIG_DOS_PARTITION
 #define CONFIG_USB_STORAGE
+#define CONFIG_USBDOWNLOAD_GADGET
+#define CONFIG_SYS_CACHELINE_SIZE              32
+#define CONFIG_USB_GADGET_VBUS_DRAW             0
+#define CONFIG_G_DNL_MANUFACTURER               "Atmel Corporation"
+#define CONFIG_G_DNL_VENDOR_NUM                 0x03EB
+#define CONFIG_G_DNL_PRODUCT_NUM                0x6158
+#define CONFIG_CMD_FASTBOOT
+#define CONFIG_USB_FASTBOOT_BUF_SIZE            (SZ_512M - SZ_32M)
+#define CONFIG_USB_FASTBOOT_BUF_ADDR            CONFIG_SYS_LOAD_ADDR
 #endif
 
 /* USB device */
