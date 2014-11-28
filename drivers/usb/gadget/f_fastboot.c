@@ -492,8 +492,8 @@ static void cb_erase_nand(struct usb_ep *ep, struct usb_request *req)
     if (!strcmp_l1("dtb", cmd)) {
         sprintf(command, "nand erase.part dtb");
         ret = run_command(command, 0);
-    } else if (!strcmp_l1("boot", cmd)) {
-        sprintf(command, "nand erase.part boot");
+    } else if (!strcmp_l1("kernel", cmd)) {
+        sprintf(command, "nand erase.part kernel");
         ret = run_command(command, 0);
     } else if (!strcmp_l1("system", cmd)) {
         sprintf(command, "nand erase.part system");
@@ -538,18 +538,26 @@ static void cb_flash_nand(struct usb_ep *ep, struct usb_request *req)
     int ret;
 
     if (!strcmp_l1("dtb", cmd)) {
+	sprintf(command, "nand erase.part dtb");
+        ret = run_command(command, 0);
         sprintf(command, "nand write %08x dtb %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
-    } else if (!strcmp_l1("boot", cmd)) {
-        sprintf(command, "nand write %08x boot %s",
+    } else if (!strcmp_l1("kernel", cmd)) {
+        sprintf(command, "nand erase.part kernel");
+        ret = run_command(command, 0);
+        sprintf(command, "nand write %08x kernel %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
     } else if (!strcmp_l1("system", cmd)) {
+        sprintf(command, "nand erase.part system");
+        ret = run_command(command, 0);
         sprintf(command, "nand write.trimffs %08x system %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
     } else if (!strcmp_l1("userdata", cmd)) {
+        sprintf(command, "nand erase.part userdata");
+        ret = run_command(command, 0);
         sprintf(command, "nand write.trimffs %08x userdata %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
@@ -585,17 +593,24 @@ static void cb_flash_mmc(struct usb_ep *ep, struct usb_request *req)
 
 #ifdef CONFIG_FAT_WRITE
     char *command = malloc(60 * sizeof(char));
+    char *fdtFile = malloc(30 * sizeof(char));
     int ret= 0;
 
+    fdtFile = getenv("fdtfile");
+
     if (!strcmp_l1("dtb", cmd)) {
-        sprintf(command, "fatwrite mmc 0 %08x sama5d4ek.dtb %s",
-            CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
+        if (fdtFile)
+            sprintf(command, "fatwrite mmc 0 %08x %s %s",
+                CONFIG_USB_FASTBOOT_BUF_ADDR, fdtFile, download_lenth);
+        else
+            sprintf(command, "fatwrite mmc 0 %08x %s %s",
+                CONFIG_USB_FASTBOOT_BUF_ADDR, "sama5d4ek.dtb", download_lenth);
         ret = run_command(command, 0);
     } else if (!strcmp_l1("uboot", cmd)) {
         sprintf(command, "fatwrite mmc 0 %08x u-boot.bin %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
-    } else if (!strcmp_l1("boot", cmd)) {
+    } else if (!strcmp_l1("kernel", cmd)) {
         sprintf(command, "fatwrite mmc 0 %08x zImage %s",
             CONFIG_USB_FASTBOOT_BUF_ADDR, download_lenth);
         ret = run_command(command, 0);
