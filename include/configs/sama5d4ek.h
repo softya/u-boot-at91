@@ -145,6 +145,27 @@
 #define CONFIG_USB_ETH_RNDIS
 #define CONFIG_USBNET_MANUFACTURER      "Atmel SAMA5D4EK"
 
+#if defined(CONFIG_SYS_USE_NANDFLASH) || defined(CONFIG_SYS_USE_MMC)
+#define CONFIG_ANDROID_RECOVERY
+#endif
+
+#ifdef CONFIG_ANDROID_RECOVERY
+#define CONFIG_CMD_RECOVERY
+
+#ifdef CONFIG_SYS_USE_NANDFLASH
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_NAND \
+    "nand read 0x21000000 0x00180000 0x00080000; " \
+    "nand read 0x22000000 0x00800000 0x00600000; " \
+    "bootz 0x22000000 - 0x21000000"
+#elif CONFIG_SYS_USE_MMC
+#define CONFIG_ANDROID_RECOVERY_BOOTCMD_MMC \
+    "fatload mmc 0:1 0x21000000 sama5d4ek.dtb; " \
+    "fatload mmc 0:1 0x22000000 recovery.img; " \
+    "bootz 0x22000000 - 0x21000000"
+#endif
+
+#endif /* CONFIG_ANDROID_RECOVERY */
+
 #if defined(CONFIG_CMD_USB) || defined(CONFIG_CMD_MMC)
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
