@@ -310,6 +310,22 @@ void check_recovery_button(void)
 }
 #endif
 
+#ifdef CONFIG_CMD_FASTBOOT
+int fastboot_mode_flag = 0;
+void fastboot_button_hw_init(void)
+{
+       at91_set_pio_input(AT91_PIO_PORTE, 13, 1);
+}
+
+void check_fastboot_button(void)
+{
+       if (at91_get_pio_value(AT91_PIO_PORTE, 13) == 0) {
+               printf("USER button pressed...\n");
+               fastboot_mode_flag = 1;
+       }
+}
+#endif
+
 int board_init(void)
 {
 	/* adress of boot parameters */
@@ -343,6 +359,9 @@ int board_init(void)
 #ifdef CONFIG_ANDROID_RECOVERY
 	recovery_button_hw_init();
 	check_recovery_button();
+#endif
+#ifdef CONFIG_CMD_FASTBOOT
+       fastboot_button_hw_init();
 #endif
 
 	return 0;
@@ -382,6 +401,11 @@ int board_late_init(void)
 {
 #ifdef CONFIG_ANDROID_RECOVERY
 	check_recovery_mode();
+#endif
+#ifdef CONFIG_CMD_FASTBOOT
+       check_fastboot_button();
+       if (fastboot_mode_flag)
+               run_command("setenv bootcmd fastboot", 0);
 #endif
 	return 0;
 }
