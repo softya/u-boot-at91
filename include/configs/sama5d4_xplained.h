@@ -31,6 +31,8 @@
 
 #define CONFIG_SYS_GENERIC_BOARD
 
+#define CONFIG_BOARD_LATE_INIT
+
 /* general purpose I/O */
 #define CONFIG_AT91_GPIO
 

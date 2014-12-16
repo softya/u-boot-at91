@@ -273,6 +273,22 @@ int board_early_init_f(void)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_FASTBOOT
+int fastboot_mode_flag = 0;
+void fastboot_button_hw_init(void)
+{
+       at91_set_pio_input(AT91_PIO_PORTE, 8, 1);
+}
+
+void check_fastboot_button(void)
+{
+       if (at91_get_pio_value(AT91_PIO_PORTE, 8) == 0) {
+               printf("USER button pressed...\n");
+               fastboot_mode_flag = 1;
+       }
+}
+#endif
+
 int board_init(void)
 {
 	/* adress of boot parameters */
@@ -298,6 +314,9 @@ int board_init(void)
 #endif
 #ifdef CONFIG_CMD_USB
 	sama5d4_xplained_usb_hw_init();
+#endif
+#ifdef CONFIG_CMD_FASTBOOT
+       fastboot_button_hw_init();
 #endif
 
 	return 0;
@@ -327,3 +346,16 @@ int board_eth_init(bd_t *bis)
 
 	return rc;
 }
+
+#ifdef CONFIG_BOARD_LATE_INIT
+int board_late_init(void)
+{
+#ifdef CONFIG_CMD_FASTBOOT
+       check_fastboot_button();
+       if (fastboot_mode_flag)
+               run_command("setenv bootcmd fastboot", 0);
+#endif
+        return 0;
+}
+#endif
+
