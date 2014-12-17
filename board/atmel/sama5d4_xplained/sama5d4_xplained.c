@@ -273,6 +273,25 @@ int board_early_init_f(void)
 	return 0;
 }
 
+
+#ifdef CONFIG_ANDROID_RECOVERY
+extern int recovery_mode_flag;
+void check_recovery_mode(void);
+
+void recovery_button_hw_init(void)
+{
+	at91_set_pio_input(AT91_PIO_PORTD, 11, 1);
+}
+
+void check_recovery_button(void)
+{
+	if (at91_get_pio_value(AT91_PIO_PORTD, 11) == 0) {
+		printf("EXP/XPRO_PD11 connected to GND\n");
+		recovery_mode_flag = 1;
+	}
+}
+#endif
+
 #ifdef CONFIG_CMD_FASTBOOT
 int fastboot_mode_flag = 0;
 void fastboot_button_hw_init(void)
@@ -315,10 +334,13 @@ int board_init(void)
 #ifdef CONFIG_CMD_USB
 	sama5d4_xplained_usb_hw_init();
 #endif
+#ifdef CONFIG_ANDROID_RECOVERY
+        recovery_button_hw_init();
+        check_recovery_button();
+#endif
 #ifdef CONFIG_CMD_FASTBOOT
        fastboot_button_hw_init();
 #endif
-
 	return 0;
 }
 
@@ -350,6 +372,9 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
+#ifdef CONFIG_ANDROID_RECOVERY
+	check_recovery_mode();
+#endif
 #ifdef CONFIG_CMD_FASTBOOT
        check_fastboot_button();
        if (fastboot_mode_flag)
