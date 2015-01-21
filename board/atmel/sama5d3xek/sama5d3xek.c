@@ -24,6 +24,7 @@
 #include <spl.h>
 #include <asm/arch/atmel_mpddrc.h>
 #include <asm/arch/at91_wdt.h>
+#include <g_dnl.h>
 
 #ifdef CONFIG_USB_GADGET_ATMEL_USBA
 #include <asm/arch/atmel_usba_udc.h>
@@ -257,7 +258,17 @@ void check_fastboot_button(void)
 		fastboot_mode_flag = 1;
        }
 }
+
+int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
+{
+	char *fastboot = "001234";
+
+	g_dnl_set_serialnumber(fastboot);
+
+	return 0;
+}
 #endif
+
 int board_init(void)
 {
 	/* adress of boot parameters */

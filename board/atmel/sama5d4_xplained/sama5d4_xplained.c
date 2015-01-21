@@ -23,6 +23,7 @@
 #include <netdev.h>
 #include <nand.h>
 #include <spi.h>
+#include <g_dnl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -305,6 +306,15 @@ void check_fastboot_button(void)
                printf("USER button pressed...\n");
                fastboot_mode_flag = 1;
        }
+}
+
+int g_dnl_bind_fixup(struct usb_device_descriptor *dev, const char *name)
+{
+	char *fastboot = "001234";
+
+	g_dnl_set_serialnumber(fastboot);
+
+	return 0;
 }
 #endif
 
