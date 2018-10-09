@@ -1,0 +1,18 @@
+# Generate U-Boot environment (binary file) as follows:
+# $ cd u-boot-at91/
+# $ mkenvimage -s 16384 -o ./uboot.env ./rex-ii_uboot-env.txt
+#
+# NOTE: The generated file size must be 16384 exactly.
+#
+# Use the generated uboot.env file in the SD Card FAT partition.
+# Or alternatively, when booting from NAND flash, burn it into the NAND flash at address 0xC0000:
+# mtd2: 000c0000 00040000 "bootloader env"
+
+
+baudrate=115200
+bootargs=console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait init=/init androidboot.hardware=sama5-ek androidboot.console=ttyS0 androidboot.lcd=hvga
+bootcmd=fatload mmc 0:1 0x21000000 at91-sama5d4_xplained_rex-ii_displaytech.dtb;fatload mmc 0:1 0x22000000 zImage;bootz 0x22000000 - 0x21000000
+bootdelay=3
+ethact=gmac0
+filesize=451f
+
